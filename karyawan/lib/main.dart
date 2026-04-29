@@ -14,64 +14,66 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Daftar Karyawan',
+      title: "Daftar Karyawan",
       theme: ThemeData(
-        colorScheme: .fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.deepPurple,
+        ),
         useMaterial3: true,
       ),
-      home: HomePage(),
+      home: const MyHomePage(),
     );
   }
 }
 
-class HomePage extends StatelessWidget {
-  const HomePage({super.key});
-
-  Future<List<Karyawan>> leadKaryawan() async {
-    final String response = await rootBundle.loadString('assets/karyawan.json');
-    final List<dynamic> data = jsonDecode(response);
+class MyHomePage extends StatelessWidget {
+  const MyHomePage({super.key});
+  Future<List<Karyawan>> _readJsonData() async {
+    String response = await rootBundle.loadString("assets/karyawan.json");
+    final List<dynamic> data = json.decode(response);
     return data.map((json) => Karyawan.fromJson(json)).toList();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Daftar Karyawan')),
-
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        title: const Text("Daftar Karyawan"),
+      ),
       body: FutureBuilder<List<Karyawan>>(
-        future: leadKaryawan(),
+        future: _readJsonData(),
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return Center(child: Text('Tidak ada data karyawan'));
-          } else {
-            final karyawanList = snapshot.data!;
+          if (snapshot.hasData) {
             return ListView.builder(
-              itemCount: karyawanList.length,
+              itemCount: snapshot.data!.length,
               itemBuilder: (context, index) {
-                final karyawan = karyawanList[index];
                 return ListTile(
                   title: Text(
-                    karyawan.nama,
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    snapshot.data![index].nama,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                   subtitle: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Umur: ${karyawan.umur}'),
-                      Text(
-                        'Alamat: ${karyawan.alamat.jalan}, ${karyawan.alamat.kota}, ${karyawan.alamat.provinsi}',
-                      ),
-                      Text('Hobi: ${karyawan.hobi.join(', ')}'),
+                      Text("Umur: ${snapshot.data![index].umur} tahun"),
+                      Text("Alamat: ${snapshot.data![index].alamat.jalan}, "
+                          "${snapshot.data![index].alamat.kota}, "
+                          "${snapshot.data![index].alamat.provinsi}"),
+                      //Tampilkan HOBBY
+                      if (snapshot.data![index].hobi.length > 1)
+                        Text("Hobi: ${snapshot.data![index].hobi[1]}"),
                     ],
                   ),
                 );
               },
             );
+          } else if (snapshot.hasError) {
+            return Center(
+              child: Text('${snapshot.error}'),
+            );
           }
+          return const Center(child: CircularProgressIndicator());
         },
       ),
     );
